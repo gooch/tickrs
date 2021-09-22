@@ -25,7 +25,8 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
     type State = StockState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let (min, max) = state.min_max(&self.data);
+        let (_, max) = state.min_max(&self.data);
+        let min = 0.0;
         let (start, end) = state.start_end();
 
         let mut prices: Vec<_> = self.data.iter().map(cast_historical_as_price).collect();
