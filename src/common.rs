@@ -68,6 +68,8 @@ pub enum TimeFrame {
     Year1,
     #[serde(alias = "5Y")]
     Year5,
+    #[serde(alias = "MAX")]
+    Max,
 }
 
 impl FromStr for TimeFrame {
@@ -77,14 +79,15 @@ impl FromStr for TimeFrame {
         use TimeFrame::*;
 
         match s {
-            "1D" => Ok(Day1),
-            "1W" => Ok(Week1),
-            "1M" => Ok(Month1),
-            "3M" => Ok(Month3),
-            "6M" => Ok(Month6),
-            "1Y" => Ok(Year1),
-            "5Y" => Ok(Year5),
-            _ => Err("Valid time frames are: '1D', '1W', '1M', '3M', '6M', '1Y', '5Y'"),
+            "1D"  => Ok(Day1),
+            "1W"  => Ok(Week1),
+            "1M"  => Ok(Month1),
+            "3M"  => Ok(Month3),
+            "6M"  => Ok(Month6),
+            "1Y"  => Ok(Year1),
+            "5Y"  => Ok(Year5),
+            "MAX" => Ok(Max),
+            _ => Err("Valid time frames are: '1D', '1W', '1M', '3M', '6M', '1Y', '5Y', 'MAX'"),
         }
     }
 }
@@ -99,14 +102,15 @@ impl TimeFrame {
             TimeFrame::Month6 => 4,
             TimeFrame::Year1 => 5,
             TimeFrame::Year5 => 6,
+            TimeFrame::Max => 7,
         }
     }
 
-    pub const fn tab_names() -> [&'static str; 7] {
-        ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y"]
+    pub const fn tab_names() -> [&'static str; 8] {
+        ["1D", "1W", "1M", "3M", "6M", "1Y", "5Y", "MAX"]
     }
 
-    pub const ALL: [TimeFrame; 7] = [
+    pub const ALL: [TimeFrame; 8] = [
         TimeFrame::Day1,
         TimeFrame::Week1,
         TimeFrame::Month1,
@@ -114,6 +118,7 @@ impl TimeFrame {
         TimeFrame::Month6,
         TimeFrame::Year1,
         TimeFrame::Year5,
+        TimeFrame::Max,
     ];
 
     pub fn update_interval(self) -> Duration {
@@ -125,6 +130,7 @@ impl TimeFrame {
             TimeFrame::Month6 => Duration::from_secs(60 * 60),
             TimeFrame::Year1 => Duration::from_secs(60 * 60 * 24),
             TimeFrame::Year5 => Duration::from_secs(60 * 60 * 24),
+            TimeFrame::Max => Duration::from_secs(60 * 60 * 24),
         }
     }
 
@@ -136,19 +142,21 @@ impl TimeFrame {
             TimeFrame::Month3 => TimeFrame::Month6,
             TimeFrame::Month6 => TimeFrame::Year1,
             TimeFrame::Year1 => TimeFrame::Year5,
-            TimeFrame::Year5 => TimeFrame::Day1,
+            TimeFrame::Year5 => TimeFrame::Max,
+            TimeFrame::Max => TimeFrame::Day1,
         }
     }
 
     pub fn down(self) -> TimeFrame {
         match self {
-            TimeFrame::Day1 => TimeFrame::Year5,
+            TimeFrame::Day1 => TimeFrame::Max,
             TimeFrame::Week1 => TimeFrame::Day1,
             TimeFrame::Month1 => TimeFrame::Week1,
             TimeFrame::Month3 => TimeFrame::Month1,
             TimeFrame::Month6 => TimeFrame::Month3,
             TimeFrame::Year1 => TimeFrame::Month6,
             TimeFrame::Year5 => TimeFrame::Year1,
+            TimeFrame::Max => TimeFrame::Year5,
         }
     }
 
@@ -161,6 +169,7 @@ impl TimeFrame {
             TimeFrame::Month6 => Range::Month6,
             TimeFrame::Year1 => Range::Year1,
             TimeFrame::Year5 => Range::Year5,
+            TimeFrame::Max => Range::Max,
         }
     }
 
