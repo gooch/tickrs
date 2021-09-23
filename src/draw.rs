@@ -100,11 +100,12 @@ pub fn draw<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) {
 fn draw_main<B: Backend>(frame: &mut Frame<B>, app: &mut App, area: Rect) {
     // layout[0] - Header
     // layout[1] - Main widget
+    let min = if app.stocks.len() > 1 { 3 } else { 0 };
     let mut layout = Layout::default()
-        .constraints([Constraint::Length(3), Constraint::Min(0)].as_ref())
+        .constraints([Constraint::Length(min), Constraint::Min(0)].as_ref())
         .split(area);
 
-    if !app.stocks.is_empty() {
+    if app.stocks.len() > 1 {
         frame.render_widget(crate::widget::block::new(" Tabs "), layout[0]);
         layout[0] = add_padding(layout[0], 1, PaddingDirection::All);
 
