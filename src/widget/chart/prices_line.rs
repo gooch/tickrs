@@ -26,7 +26,6 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
         let (_, max) = state.min_max(&self.data);
-        let min = 0.0;
         let (start, end) = state.start_end();
 
         let mut prices: Vec<_> = self.data.iter().map(cast_historical_as_price).collect();
@@ -207,8 +206,8 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
             })
             .y_axis(
                 Axis::default()
-                    .bounds(state.y_bounds(min, max))
-                    .labels(state.y_labels(min, max, self.decimal_format))
+                    .bounds(state.y_bounds(0.001, max))
+                    .labels(state.y_labels(0.0, max, self.decimal_format))
                     .style(style().fg(THEME.border_axis())),
             );
 
