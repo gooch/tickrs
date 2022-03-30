@@ -29,8 +29,8 @@ impl AsyncTask for DefaultTimestamps {
     fn task<'a>(_input: Arc<Self::Input>) -> BoxFuture<'a, Option<Self::Response>> {
         Box::pin(async move {
             let symbol = "SPY";
-
-            let tasks = TimeFrame::ALL[1..].iter().map(|timeframe| async move {
+            let last_non_max = TimeFrame::ALL.len()-1;
+            let tasks = TimeFrame::ALL[1..last_non_max].iter().map(|timeframe| async move {
                 let interval = timeframe.api_interval();
                 let range = timeframe.as_range();
 
