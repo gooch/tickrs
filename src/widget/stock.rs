@@ -69,16 +69,12 @@ impl Hash for StockState {
         }
 
         // Hash globals since they affect "state" of how widget is rendered
-        DEFAULT_TIMESTAMPS
-            .read()
-            .unwrap()
-            .get(&self.time_frame)
-            .hash(state);
-        ENABLE_PRE_POST.read().unwrap().hash(state);
+        DEFAULT_TIMESTAMPS.read().get(&self.time_frame).hash(state);
+        ENABLE_PRE_POST.read().hash(state);
         HIDE_PREV_CLOSE.hash(state);
         HIDE_TOGGLE.hash(state);
-        SHOW_VOLUMES.read().unwrap().hash(state);
-        SHOW_X_LABELS.read().unwrap().hash(state);
+        SHOW_VOLUMES.read().hash(state);
+        SHOW_X_LABELS.read().hash(state);
         TRUNC_PRE.hash(state);
     }
 }
@@ -145,7 +141,7 @@ impl StockState {
         let max_time = prices.last().map(|p| p.date).unwrap_or(end);
 
         let default_timestamps = {
-            let defaults = DEFAULT_TIMESTAMPS.read().unwrap();
+            let defaults = DEFAULT_TIMESTAMPS.read();
             defaults.get(&self.time_frame).cloned()
         };
 
@@ -224,7 +220,7 @@ impl StockState {
     }
 
     pub fn current_price(&self) -> f64 {
-        let enable_pre_post = { *ENABLE_PRE_POST.read().unwrap() };
+        let enable_pre_post = { *ENABLE_PRE_POST.read() };
 
         if enable_pre_post && self.current_post_price.is_some() {
             self.current_post_price
@@ -311,7 +307,7 @@ impl StockState {
     }
 
     pub fn start_end(&self) -> (i64, i64) {
-        let enable_pre_post = { *ENABLE_PRE_POST.read().unwrap() };
+        let enable_pre_post = { *ENABLE_PRE_POST.read() };
 
         let pre = self
             .chart_meta
@@ -461,7 +457,7 @@ impl StockState {
         }
 
         let label_len = dates
-            .get(0)
+            .first()
             .map_or(0, |d| self.time_frame.format_time(*d).len())
             + 5;
 
@@ -491,21 +487,21 @@ impl StockState {
         [(min), (max)]
     }
 
-    pub fn y_labels(&self, min: f64, max: f64, format: DecimalFormat) -> Vec<Span> {
-        let padded = |x: f64| match format {
-            DecimalFormat::Two => {
-                format!("{:>8.2}", x)
-            }
-            DecimalFormat::Four => {
-                format!("{:>8.4}", x)
-            }
-        };
-
+    pub fn y_labels(&self, min: f64, max: f64) -> Vec<Span> {
         if self.loaded() {
             vec![
-                Span::styled(padded(min), style().fg(THEME.text_normal())),
-                Span::styled(padded((min + max) / 2.0), style().fg(THEME.text_normal())),
-                Span::styled(padded(max), style().fg(THEME.text_normal())),
+                Span::styled(
+                    format!("{:>8}", format_decimals(min)),
+                    style().fg(THEME.text_normal()),
+                ),
+                Span::styled(
+                    format!("{:>8}", format_decimals((min + max) / 2.0)),
+                    style().fg(THEME.text_normal()),
+                ),
+                Span::styled(
+                    format!("{:>8}", format_decimals(max)),
+                    style().fg(THEME.text_normal()),
+                ),
             ]
         } else {
             vec![
@@ -538,18 +534,6 @@ impl StockState {
         };
 
         self.current_price() / baseline - 1.0
-    }
-
-    pub fn decimal_format(&self, data: &[Price]) -> DecimalFormat {
-        let (min, max) = self.min_max(&data);
-
-        let diff = max - min;
-
-        if diff.le(&1.0) {
-            DecimalFormat::Four
-        } else {
-            DecimalFormat::Two
-        }
     }
 
     pub fn loaded(&self) -> bool {
@@ -611,13 +595,12 @@ impl CachableWidget<StockState> for StockWidget {
     fn render(self, mut area: Rect, buf: &mut Buffer, state: &mut <Self as StatefulWidget>::State) {
         let data = state.prices().collect::<Vec<_>>();
 
-        let decimal_format = state.decimal_format(&data);
         let pct_change = state.pct_change(&data);
 
         let chart_type = state.chart_type;
-        let show_x_labels = SHOW_X_LABELS.read().map_or(false, |l| *l);
-        let enable_pre_post = *ENABLE_PRE_POST.read().unwrap();
-        let show_volumes = *SHOW_VOLUMES.read().unwrap() && chart_type != ChartType::Kagi;
+        let show_x_labels = *SHOW_X_LABELS.read();
+        let enable_pre_post = *ENABLE_PRE_POST.read();
+        let show_volumes = *SHOW_VOLUMES.read() && chart_type != ChartType::Kagi;
 
         let loaded = state.loaded();
 
@@ -675,9 +658,9 @@ impl CachableWidget<StockState> for StockWidget {
             info_chunks[0] = add_padding(info_chunks[0], 1, PaddingDirection::Top);
 
             let (high, low) = state.high_low(&data);
-            let current_fmt = format_decimals(decimal_format, state.current_price());
-            let high_fmt = format_decimals(decimal_format, high);
-            let low_fmt = format_decimals(decimal_format, low);
+            let current_fmt = format_decimals(state.current_price());
+            let high_fmt = format_decimals(high);
+            let low_fmt = format_decimals(low);
 
             let vol = state.reg_mkt_volume.clone().unwrap_or_default();
 
@@ -858,7 +841,6 @@ impl CachableWidget<StockState> for StockWidget {
                     is_summary: false,
                     loaded,
                     show_x_labels,
-                    decimal_format,
                 }
                 .render(graph_chunks[0], buf, state);
             }
@@ -868,7 +850,6 @@ impl CachableWidget<StockState> for StockWidget {
                     loaded,
                     show_x_labels,
                     is_summary: false,
-                    decimal_format,
                 }
                 .render(graph_chunks[0], buf, state);
             }
@@ -879,7 +860,6 @@ impl CachableWidget<StockState> for StockWidget {
                     show_x_labels,
                     is_summary: false,
                     kagi_options: state.chart_configuration.kagi_options.clone(),
-                    decimal_format,
                 }
                 .render(graph_chunks[0], buf, state);
             }

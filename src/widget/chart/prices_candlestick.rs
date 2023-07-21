@@ -5,7 +5,7 @@ use tui::text::Span;
 use tui::widgets::canvas::{Canvas, Line, Rectangle};
 use tui::widgets::{Block, Borders, StatefulWidget, Widget};
 
-use crate::common::{DecimalFormat, Price, TimeFrame};
+use crate::common::{Price, TimeFrame};
 use crate::draw::{add_padding, PaddingDirection};
 use crate::theme::style;
 use crate::widget::StockState;
@@ -24,7 +24,6 @@ pub struct PricesCandlestickChart<'a> {
     pub data: &'a [Price],
     pub is_summary: bool,
     pub show_x_labels: bool,
-    pub decimal_format: DecimalFormat,
 }
 
 impl<'a> StatefulWidget for PricesCandlestickChart<'a> {
@@ -99,7 +98,7 @@ impl<'a> StatefulWidget for PricesCandlestickChart<'a> {
             x_area.x = layout[1].x + 1;
             x_area.width = layout[1].width - 1;
 
-            let labels = state.x_labels(area.width, start, end, &self.data);
+            let labels = state.x_labels(area.width, start, end, self.data);
             let total_width = labels.iter().map(Span::width).sum::<usize>() as u16;
             let labels_len = labels.len() as u16;
             if total_width < x_area.width && labels_len > 1 {
@@ -119,7 +118,7 @@ impl<'a> StatefulWidget for PricesCandlestickChart<'a> {
         if self.loaded {
             let y_area = layout[0];
 
-            let labels = state.y_labels(min, max, self.decimal_format);
+            let labels = state.y_labels(min, max);
             let labels_len = labels.len() as u16;
             for (i, label) in labels.iter().enumerate() {
                 let dy = i as u16 * (y_area.height - 1) / (labels_len - 1);
@@ -139,8 +138,7 @@ impl<'a> StatefulWidget for PricesCandlestickChart<'a> {
 
         let candles = data
             .iter()
-            .map(|p| vec![*p; num_candles as usize])
-            .flatten()
+            .flat_map(|p| vec![*p; num_candles as usize])
             .chunks(x_bounds[1] as usize)
             .into_iter()
             .map(|c| {

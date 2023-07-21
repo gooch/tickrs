@@ -4,8 +4,7 @@ use tui::symbols::Marker;
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, StatefulWidget, Widget};
 
 use crate::common::{
-    cast_as_dataset, cast_historical_as_price, zeros_as_pre, DecimalFormat, Price, TimeFrame,
-    TradingPeriod,
+    cast_as_dataset, cast_historical_as_price, zeros_as_pre, Price, TimeFrame, TradingPeriod,
 };
 use crate::theme::style;
 use crate::widget::StockState;
@@ -18,14 +17,13 @@ pub struct PricesLineChart<'a> {
     pub is_profit: bool,
     pub is_summary: bool,
     pub data: &'a [Price],
-    pub decimal_format: DecimalFormat,
 }
 
 impl<'a> StatefulWidget for PricesLineChart<'a> {
     type State = StockState;
 
     fn render(self, area: Rect, buf: &mut Buffer, state: &mut Self::State) {
-        let (_, max) = state.min_max(&self.data);
+        let (_, max) = state.min_max(self.data);
         let (start, end) = state.start_end();
 
         let mut prices: Vec<_> = self.data.iter().map(cast_historical_as_price).collect();
@@ -42,15 +40,15 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
         };
 
         let x_labels = if self.show_x_labels {
-            state.x_labels(area.width, start, end, &self.data)
+            state.x_labels(area.width, start, end, self.data)
         } else {
             vec![]
         };
 
-        let trading_period = state.current_trading_period(&self.data);
+        let trading_period = state.current_trading_period(self.data);
 
         let (reg_prices, pre_prices, post_prices) = if self.loaded {
-            let (start_idx, end_idx) = state.regular_start_end_idx(&self.data);
+            let (start_idx, end_idx) = state.regular_start_end_idx(self.data);
 
             if self.enable_pre_post && state.time_frame == TimeFrame::Day1 {
                 (
@@ -161,7 +159,7 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
                         THEME.loss()
                     }))
                     .graph_type(GraphType::Line)
-                    .data(&data),
+                    .data(data),
             );
         }
 
@@ -178,7 +176,7 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
                         THEME.loss()
                     }))
                     .graph_type(GraphType::Line)
-                    .data(&data),
+                    .data(data),
             );
         }
 
@@ -189,14 +187,14 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
                     .marker(Marker::Braille)
                     .style(style().fg(THEME.gray()))
                     .graph_type(GraphType::Line)
-                    .data(&data),
+                    .data(data),
             );
         }
 
         let mut chart = Chart::new(datasets)
             .style(style())
             .x_axis({
-                let axis = Axis::default().bounds(state.x_bounds(start, end, &self.data));
+                let axis = Axis::default().bounds(state.x_bounds(start, end, self.data));
 
                 if self.show_x_labels && self.loaded && !self.is_summary {
                     axis.labels(x_labels).style(style().fg(THEME.border_axis()))
@@ -207,7 +205,7 @@ impl<'a> StatefulWidget for PricesLineChart<'a> {
             .y_axis(
                 Axis::default()
                     .bounds(state.y_bounds(0.001, max))
-                    .labels(state.y_labels(0.0, max, self.decimal_format))
+                    .labels(state.y_labels(0.0, max))
                     .style(style().fg(THEME.border_axis())),
             );
 

@@ -7,7 +7,7 @@ use tui::text::Span;
 use tui::widgets::canvas::{Canvas, Line};
 use tui::widgets::{Block, Borders, StatefulWidget, Widget};
 
-use crate::common::{DecimalFormat, Price, TimeFrame};
+use crate::common::{Price, TimeFrame};
 use crate::draw::{add_padding, PaddingDirection};
 use crate::theme::style;
 use crate::widget::chart_configuration::{KagiOptions, KagiReversalOption};
@@ -123,8 +123,8 @@ fn calculate_trends(
         let first_price_gt = choose_price(&first_price, price_option, ComparisonType::Gt);
         let first_price_lt = choose_price(&first_price, price_option, ComparisonType::Lt);
 
-        let price_gt = choose_price(&price, price_option, ComparisonType::Gt);
-        let price_lt = choose_price(&price, price_option, ComparisonType::Lt);
+        let price_gt = choose_price(price, price_option, ComparisonType::Gt);
+        let price_lt = choose_price(price, price_option, ComparisonType::Lt);
 
         if price_gt.gt(&first_price_gt) {
             initial_direction = TrendDirection::Up;
@@ -145,8 +145,8 @@ fn calculate_trends(
     for (idx, price) in data[1..].iter().enumerate() {
         let (reversal_amount, diff) = {
             let current_price = match curr_trend.direction {
-                TrendDirection::Up => choose_price(&price, price_option, ComparisonType::Lt),
-                TrendDirection::Down => choose_price(&price, price_option, ComparisonType::Gt),
+                TrendDirection::Up => choose_price(price, price_option, ComparisonType::Lt),
+                TrendDirection::Down => choose_price(price, price_option, ComparisonType::Gt),
             };
             let last_price = match curr_trend.direction {
                 TrendDirection::Up => {
@@ -176,7 +176,7 @@ fn calculate_trends(
         if let Some(prev_trend) = trends.last() {
             match curr_trend.direction {
                 TrendDirection::Up => {
-                    let current_price = choose_price(&price, price_option, ComparisonType::Gt);
+                    let current_price = choose_price(price, price_option, ComparisonType::Gt);
                     let breakpoint_price =
                         choose_price(&prev_trend.first_price, price_option, ComparisonType::Gt);
 
@@ -188,7 +188,7 @@ fn calculate_trends(
                     }
                 }
                 TrendDirection::Down => {
-                    let current_price = choose_price(&price, price_option, ComparisonType::Lt);
+                    let current_price = choose_price(price, price_option, ComparisonType::Lt);
                     let breakpoint_price =
                         choose_price(&prev_trend.first_price, price_option, ComparisonType::Lt);
 
@@ -205,7 +205,7 @@ fn calculate_trends(
         // Set last / low / high of trend where applicable
         match curr_trend.direction {
             TrendDirection::Up => {
-                let current_price = choose_price(&price, price_option, ComparisonType::Gt);
+                let current_price = choose_price(price, price_option, ComparisonType::Gt);
                 let last_price =
                     choose_price(&curr_trend.last_price, price_option, ComparisonType::Gt);
 
@@ -214,7 +214,7 @@ fn calculate_trends(
                 }
             }
             TrendDirection::Down => {
-                let current_price = choose_price(&price, price_option, ComparisonType::Lt);
+                let current_price = choose_price(price, price_option, ComparisonType::Lt);
                 let last_price =
                     choose_price(&curr_trend.last_price, price_option, ComparisonType::Lt);
 
@@ -246,7 +246,6 @@ pub struct PricesKagiChart<'a> {
     pub is_summary: bool,
     pub show_x_labels: bool,
     pub kagi_options: KagiOptions,
-    pub decimal_format: DecimalFormat,
 }
 
 impl<'a> PricesKagiChart<'a> {
@@ -331,7 +330,7 @@ impl<'a> StatefulWidget for PricesKagiChart<'a> {
 
         let price_option = self.kagi_options.price_option.unwrap_or(PriceOption::Close);
 
-        let kagi_trends = calculate_trends(&self.data, reversal_option, price_option);
+        let kagi_trends = calculate_trends(self.data, reversal_option, price_option);
 
         if !self.is_summary {
             Block::default()
@@ -439,7 +438,7 @@ impl<'a> StatefulWidget for PricesKagiChart<'a> {
         if self.loaded {
             let y_area = layout[0];
 
-            let labels = state.y_labels(min, max, self.decimal_format);
+            let labels = state.y_labels(min, max);
             let labels_len = labels.len() as u16;
             for (i, label) in labels.iter().enumerate() {
                 let dy = i as u16 * (y_area.height - 1) / (labels_len - 1);
@@ -602,7 +601,7 @@ fn x_labels(width: u16, trends: &[Trend], time_frame: TimeFrame) -> Vec<Span> {
     }
 
     let label_len = trends
-        .get(0)
+        .first()
         .map_or(0, |d| time_frame.format_time(*d).len())
         + 5;
 

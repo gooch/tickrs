@@ -5,7 +5,7 @@ use crate::service::default_timestamps::DefaultTimestampService;
 use crate::service::Service;
 use crate::{widget, DEFAULT_TIMESTAMPS};
 
-#[derive(PartialEq, Clone, Copy, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Mode {
     AddStock,
     ConfigureChart,
@@ -35,7 +35,7 @@ impl App {
         let mut timestamp_updates = self.default_timestamp_service.updates();
 
         if let Some(new_defaults) = timestamp_updates.pop() {
-            *DEFAULT_TIMESTAMPS.write().unwrap() = new_defaults;
+            *DEFAULT_TIMESTAMPS.write() = new_defaults;
         }
     }
 }

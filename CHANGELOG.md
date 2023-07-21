@@ -14,6 +14,18 @@ and `Removed`.
 
 ## [Unreleased]
 
+## [0.14.8] - 2023-02-22
+
+### Packaging
+
+- Updated dependencies
+
+## [0.14.6] - 2022-08-17
+
+### Changed 
+
+- Improved dynamic decimal formatting
+
 ## [0.14.5] - 2021-05-07
 
 ### Added

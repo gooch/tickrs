@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{bail, Context, Result};
 use futures::AsyncReadExt;
 use http::Uri;
-use isahc::prelude::*;
+use isahc::HttpClient;
 use serde::de::DeserializeOwned;
 
 use crate::model::{Chart, ChartData, Company, CompanyData, Options, OptionsHeader};
@@ -187,7 +187,7 @@ impl Default for Client {
 
         #[cfg(target_os = "android")]
         {
-            use isahc::config::SslOption;
+            use isahc::config::{Configurable, SslOption};
 
             builder = builder.ssl_options(SslOption::DANGER_ACCEPT_INVALID_CERTS);
         }
