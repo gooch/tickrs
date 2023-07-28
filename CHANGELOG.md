@@ -14,6 +14,12 @@ and `Removed`.
 
 ## [Unreleased]
 
+## [0.14.9] - 2023-07-25
+
+### Fixed
+
+- Fixed API breakage preventing quotes from loading
+
 ## [0.14.8] - 2023-02-22
 
 ### Packaging
