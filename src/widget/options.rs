@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
-use chrono::DateTime;
+use chrono::NaiveDateTime;
 use tui::buffer::Buffer;
 use tui::layout::{Alignment, Constraint, Direction, Layout, Rect};
 use tui::style::Modifier;
@@ -328,7 +328,7 @@ impl CachableWidget<OptionsState> for OptionsWidget {
                 .exp_dates
                 .iter()
                 .map(|d| {
-                    let date = DateTime::from_timestamp(*d, 0).unwrap().date_naive();
+                    let date = NaiveDateTime::from_timestamp_opt(*d, 0).unwrap();
                     ListItem::new(Span::styled(date.format("%b-%d-%y").to_string(), style()))
                 })
                 .collect::<Vec<_>>();
